@@ -1,3 +1,8 @@
+# Project data files (too large for git)
+archive/
+data/
+outputs/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
