@@ -4,7 +4,7 @@
 
 This project builds an automated data pipeline for e-commerce analytics using the Olist Brazilian E-Commerce Dataset from Kaggle. The dataset contains real transaction data from 2016 to 2018, covering over 100,000 orders across multiple product categories in Brazil.
 
-The goal was to replace a manual monthly reporting process with a system that runs automatically from raw data all the way through to a finished dashboard. Every step — loading the data, cleaning it, detecting unusual orders, forecasting future revenue, and visualising the results — is handled by the pipeline without manual intervention.
+The goal was to replace a manual monthly reporting process with a system that runs automatically from raw data all the way through to a finished dashboard. Every step - loading the data, cleaning it, detecting unusual orders, forecasting future revenue, and visualising the results - is handled by the pipeline without manual intervention.
 
 The project was built using Python, SQL, scikit-learn, Plotly Dash, and Power BI.
 
@@ -12,7 +12,7 @@ The project was built using Python, SQL, scikit-learn, Plotly Dash, and Power BI
 
 ## The Problem
 
-E-commerce businesses typically generate large volumes of transactional data spread across multiple sources — orders, customers, products, payments, and reviews. When this data lives in separate files and has to be manually processed each month, reporting becomes slow, error-prone, and dependent on one person doing it correctly every time.
+E-commerce businesses typically generate large volumes of transactional data spread across multiple sources - orders, customers, products, payments, and reviews. When this data lives in separate files and has to be manually processed each month, reporting becomes slow, error-prone, and dependent on one person doing it correctly every time.
 
 This project solves that by building a pipeline that:
 - Loads all raw data into a single database automatically
@@ -27,15 +27,15 @@ This project solves that by building a pipeline that:
 
 The Olist Brazilian E-Commerce Dataset is available on Kaggle. It contains 9 CSV files covering different aspects of the business:
 
-- Orders — order status, timestamps, customer ID
-- Order items — product ID, price, freight cost per item
-- Order payments — payment method and total value per order
-- Order reviews — customer satisfaction scores
-- Customers — customer location (state and city)
-- Products — product category in Portuguese
-- Sellers — seller location
-- Geolocation — zip code coordinates
-- Category translation — Portuguese to English category names
+- Orders - order status, timestamps, customer ID
+- Order items - product ID, price, freight cost per item
+- Order payments - payment method and total value per order
+- Order reviews - customer satisfaction scores
+- Customers - customer location (state and city)
+- Products - product category in Portuguese
+- Sellers - seller location
+- Geolocation - zip code coordinates
+- Category translation - Portuguese to English category names
 
 The dataset covers September 2016 to August 2018 and contains approximately 99,000 orders and 112,000 order items.
 
@@ -81,7 +81,7 @@ E-Commerce-Analytics-Forecasting-Automation/
 
 The 9 raw CSV files are loaded into a SQLite database. SQLite was chosen because it requires no server setup and works as a single file on disk, making the project easy to run on any machine.
 
-Each CSV becomes one table in the database. The ingestion step is designed to be rerunnable — it replaces existing tables each time so the database stays in sync with the source files.
+Each CSV becomes one table in the database. The ingestion step is designed to be rerunnable - it replaces existing tables each time so the database stays in sync with the source files.
 
 Results: 9 tables loaded, including 99,441 orders and 1,000,163 geolocation records.
 
@@ -98,7 +98,7 @@ The 9 separate tables are joined into one wide fact table where each row represe
 After joining, the data is cleaned:
 - Date columns stored as strings are converted to proper datetime objects
 - Rows missing a purchase timestamp or price are dropped
-- Cancelled and unavailable orders are removed — only delivered, shipped, and invoiced orders are kept for revenue analysis
+- Cancelled and unavailable orders are removed - only delivered, shipped, and invoiced orders are kept for revenue analysis
 
 New columns are added:
 - revenue = price + freight value (total amount the customer paid)
@@ -118,11 +118,11 @@ The IQR measures the spread of the middle 50% of the data. The lower and upper f
 - Lower fence = Q1 minus 4.5 times the IQR
 - Upper fence = Q3 plus 4.5 times the IQR
 
-Any price outside those fences is flagged. A multiplier of 4.5 is used instead of the standard 1.5 because e-commerce prices are naturally skewed — expensive items are legitimate and the standard threshold would produce too many false positives. Freight value was excluded from IQR flagging because shipping costs in Brazil vary significantly by region and would produce unreliable flags.
+Any price outside those fences is flagged. A multiplier of 4.5 is used instead of the standard 1.5 because e-commerce prices are naturally skewed - expensive items are legitimate and the standard threshold would produce too many false positives. Freight value was excluded from IQR flagging because shipping costs in Brazil vary significantly by region and would produce unreliable flags.
 
 **Isolation Forest on price, freight, and revenue**
 
-Isolation Forest is a machine learning algorithm from scikit-learn. It builds 100 random decision trees that repeatedly split the data on random features and values. Orders that get isolated quickly — in fewer splits — are further from the main cluster and are treated as anomalies.
+Isolation Forest is a machine learning algorithm from scikit-learn. It builds 100 random decision trees that repeatedly split the data on random features and values. Orders that get isolated quickly - in fewer splits - are further from the main cluster and are treated as anomalies.
 
 The contamination parameter is set to 0.01, meaning the model expects roughly 1% of the data to be anomalies. Unlike IQR, Isolation Forest looks at combinations of features, so it can catch cases where no single value is extreme but the combination is unusual.
 
@@ -153,17 +153,17 @@ The last 3 months of data are held out as a test set. The model never sees this 
 **Models compared**
 
 Three models are trained and evaluated:
-- Linear Regression — fits a straight line through the lag features. Fast and interpretable. Works well on small datasets.
-- Random Forest — builds 100 decision trees on random subsets of the data and averages their predictions. Handles non-linear patterns but requires more data to generalise well.
-- XGBoost — builds trees sequentially where each tree corrects the errors of the previous one. Often the most accurate on large datasets but can overfit on small ones.
+- Linear Regression - fits a straight line through the lag features. Fast and interpretable. Works well on small datasets.
+- Random Forest - builds 100 decision trees on random subsets of the data and averages their predictions. Handles non-linear patterns but requires more data to generalise well.
+- XGBoost - builds trees sequentially where each tree corrects the errors of the previous one. Often the most accurate on large datasets but can overfit on small ones.
 
 **Evaluation**
 
-Each model is measured by MAE (Mean Absolute Error) — the average number of Reais the prediction is off by. Results are also compared against a naive baseline model that simply predicts the training average every month.
+Each model is measured by MAE (Mean Absolute Error) - the average number of Reais the prediction is off by. Results are also compared against a naive baseline model that simply predicts the training average every month.
 
 The best model is refit on all available data and used to forecast the next 3 months of revenue.
 
-Results: Random Forest achieved the lowest MAE at R$26,880 with roughly 90% improvement over the baseline. XGBoost came second and Linear Regression third. With only 20 months of training data, simpler models do not always win — the model ranking is data-dependent and changed when the incomplete month was removed from the dataset.
+Results: Random Forest achieved the lowest MAE at R$26,880 with roughly 90% improvement over the baseline. XGBoost came second and Linear Regression third. With only 20 months of training data, simpler models do not always win - the model ranking is data-dependent and changed when the incomplete month was removed from the dataset.
 
 ---
 
@@ -180,10 +180,10 @@ A web-based interactive dashboard that runs locally in the browser. It includes:
 ### Power BI (ECommerce_Analytics.pbix)
 
 A four-page Power BI Desktop report connected to the output CSV files:
-- Page 1: Overview — KPI cards and monthly revenue trend line
-- Page 2: Forecast — actual versus predicted revenue on a single line chart
-- Page 3: Anomalies — bar chart by product category with a state slicer for filtering
-- Page 4: Model Performance — MAE and percentage improvement comparison across all three models
+- Page 1: Overview - KPI cards and monthly revenue trend line
+- Page 2: Forecast - actual versus predicted revenue on a single line chart
+- Page 3: Anomalies - bar chart by product category with a state slicer for filtering
+- Page 4: Model Performance - MAE and percentage improvement comparison across all three models
 
 ---
 
