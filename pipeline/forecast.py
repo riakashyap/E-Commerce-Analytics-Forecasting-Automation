@@ -27,6 +27,13 @@ def build_monthly_features(df: pd.DataFrame) -> pd.DataFrame:
         .reset_index()
         .sort_values("year_month")
     )
+
+    # Drop the last month if it looks incomplete (less than 20% of median revenue)
+    median_rev = monthly["revenue"].median()
+    if monthly["revenue"].iloc[-1] < median_rev * 0.2:
+        print(f"  [INFO] Dropping incomplete month: {monthly['year_month'].iloc[-1]} (R${monthly['revenue'].iloc[-1]:,.0f})")
+        monthly = monthly.iloc[:-1]
+
     monthly["t"] = np.arange(len(monthly))
     monthly["lag1"] = monthly["revenue"].shift(1)
     monthly["lag2"] = monthly["revenue"].shift(2)
@@ -73,6 +80,9 @@ def forecast_future(best_model, monthly: pd.DataFrame) -> pd.DataFrame:
     history_orders = list(monthly["order_count"])
     last_t = monthly["t"].iloc[-1]
 
+    # Generate real future month strings from the last known month
+    last_month = pd.Period(monthly["year_month"].iloc[-1], freq="M")
+
     future_rows = []
     for i in range(1, FORECAST_MONTHS + 1):
         lag1 = history_revenue[-1]
@@ -86,10 +96,11 @@ def forecast_future(best_model, monthly: pd.DataFrame) -> pd.DataFrame:
             "lag1": lag1, "lag2": lag2, "lag3": lag3,
             "rolling3": rolling3, "order_count": order_count,
         }
-        pred = best_model.predict(pd.DataFrame([row]))[0]
+        pred = max(best_model.predict(pd.DataFrame([row]))[0], 0)
         history_revenue.append(pred)
         history_orders.append(order_count)
-        future_rows.append({"year_month": f"forecast+{i}", "revenue": pred, "type": "forecast"})
+        future_month = str(last_month + i)
+        future_rows.append({"year_month": future_month, "revenue": pred, "type": "forecast"})
 
     return pd.DataFrame(future_rows)
 
